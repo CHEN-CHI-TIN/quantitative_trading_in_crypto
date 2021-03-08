@@ -120,42 +120,6 @@ setInterval(() => {
         }
 
         /**
-         * 上唇 < 齒，多頭平倉
-         */
-        if (alligatorUp < alligatorMiddel && buy == true) {
-            post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                action: "SELL",
-                amount: String(lastBuyAmount),
-                price: String(currentPrice),
-                timestamp: Date.parse(new Date()),
-                type: "LIMIT"
-            })).then((resData) => {
-                console.log("多頭平倉");
-                console.log(resData);
-                buy = false;
-                watchOffsetBuy = true;
-            });
-        }
-
-        /**
-         * 上唇 > 齒，空頭平倉
-         */
-        if (alligatorUp > alligatorMiddel && sell == true) {
-            post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                action: "BUY",
-                amount: String(lastSellAmount),
-                price: String(currentPrice),
-                timestamp: Date.parse(new Date()),
-                type: "LIMIT"
-            })).then((resData) => {
-                console.log("空頭平倉");
-                console.log(resData);
-                sell = false;
-                watchOffsetSell = true;
-            });
-        }
-
-        /**
          * 追蹤做多
          */
         if (watchBuy == true) {
@@ -220,6 +184,42 @@ setInterval(() => {
                 } else {
                     watchSell = false;
                 }
+            });
+        }
+
+        /**
+         * 上唇 < 齒，多頭平倉
+         */
+        if (alligatorUp < alligatorMiddel && buy == true && watchBuy == false) {
+            post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                action: "SELL",
+                amount: String(lastBuyAmount),
+                price: String(currentPrice),
+                timestamp: Date.parse(new Date()),
+                type: "LIMIT"
+            })).then((resData) => {
+                console.log("多頭平倉");
+                console.log(resData);
+                buy = false;
+                watchOffsetBuy = true;
+            });
+        }
+
+        /**
+         * 上唇 > 齒，空頭平倉
+         */
+        if (alligatorUp > alligatorMiddel && sell == true && watchSell == false) {
+            post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                action: "BUY",
+                amount: String(lastSellAmount),
+                price: String(currentPrice),
+                timestamp: Date.parse(new Date()),
+                type: "LIMIT"
+            })).then((resData) => {
+                console.log("空頭平倉");
+                console.log(resData);
+                sell = false;
+                watchOffsetSell = true;
             });
         }
 
