@@ -18,10 +18,12 @@ const amountRound = 3; //交易量深度(USDT:3)
 
 let lastBuyAmount = 0;
 let lastSellAmount = 0;
-let switchBuy = false;
-let switchSell = false;
-let offsetBuy = false;
-let offsetSell = false;
+let buy = false;
+let sell = false;
+let watchBuy = false;
+let watchSell = false;
+let watchOffsetBuy = false;
+let watchOffsetSell = false;
 let sumBuy = 0;
 let sumSell = 0;
 let totalBalance = {};
@@ -42,7 +44,7 @@ setInterval(() => {
         let currentPrice = alligator["currentPrice"];
 
         console.log("--------------------------------------------------------------------------------------------------------------------", Date());
-        console.log("資料量：", data.length, "|", "是否已做多：", switchBuy, "|", "是否已做空：", switchSell, "|", "總做多次數：", sumBuy, "|", "總做空次數：", sumSell);
+        console.log("資料量：", data.length, "|", "是否已做多：", buy, "|", "是否已做空：", sell, "|", "總做多次數：", sumBuy, "|", "總做空次數：", sumSell);
         console.log("鱷魚下巴_SMA13：", alligatorDown, "|", "鱷魚牙齒_SMA8：", alligatorMiddel, "|", "鱷魚上唇_SMA5：", alligatorUp, "|", "上分形：", fractalUp, "|", "下分形：", fractalDown);
         console.log("當前價格：", currentPrice);
         console.log("總資產：", totalBalance["total"], "|", `${pairFront}：`, totalBalance["front"], "|", `${pairBack}：`, totalBalance["back"]);
@@ -50,7 +52,7 @@ setInterval(() => {
         /**
          * 追蹤多頭平倉
          */
-        if (offsetBuy == true) {
+        if (watchOffsetBuy == true) {
             //查看所有合約
             get(o.optionAllOrders(pair, apiKey, apiSecret, {
                 identity: email,
@@ -76,7 +78,7 @@ setInterval(() => {
                         });
                     });
                 } else {
-                    offsetBuy = false;
+                    watchOffsetBuy = false;
                     sumBuy++;
                 }
             });
@@ -85,7 +87,7 @@ setInterval(() => {
         /**
          * 追蹤空頭平倉
          */
-        if (offsetSell == true) {
+        if (watchOffsetSell == true) {
             //查看所有合約
             get(o.optionAllOrders(pair, apiKey, apiSecret, {
                 identity: email,
@@ -111,7 +113,7 @@ setInterval(() => {
                         });
                     });
                 } else {
-                    offsetSell = false;
+                    watchOffsetSell = false;
                     sumSell++;
                 }
             });
@@ -120,7 +122,7 @@ setInterval(() => {
         /**
          * 上唇 < 齒，多頭平倉
          */
-        if (alligatorUp < alligatorMiddel && switchBuy == true) {
+        if (alligatorUp < alligatorMiddel && buy == true) {
             post(o.optionCreatOrder(pair, apiKey, apiSecret, {
                 action: "SELL",
                 amount: String(lastBuyAmount),
@@ -130,15 +132,15 @@ setInterval(() => {
             })).then((resData) => {
                 console.log("多頭平倉");
                 console.log(resData);
-                switchBuy = false;
-                offsetBuy = true;
+                buy = false;
+                watchOffsetBuy = true;
             });
         }
 
         /**
          * 上唇 > 齒，空頭平倉
          */
-        if (alligatorUp > alligatorMiddel && switchSell == true) {
+        if (alligatorUp > alligatorMiddel && sell == true) {
             post(o.optionCreatOrder(pair, apiKey, apiSecret, {
                 action: "BUY",
                 amount: String(lastSellAmount),
@@ -148,102 +150,136 @@ setInterval(() => {
             })).then((resData) => {
                 console.log("空頭平倉");
                 console.log(resData);
-                switchSell = false;
-                offsetSell = true;
+                sell = false;
+                watchOffsetSell = true;
+            });
+        }
+
+        /**
+         * 追蹤做多
+         */
+        if (watchBuy == true) {
+            //查看所有合約
+            get(o.optionAllOrders(pair, apiKey, apiSecret, {
+                identity: email,
+                nonce: Date.now()
+            })).then((resData) => {
+                //如果尚有多單，刪除漏單並重新做多
+                if (o.hasBuyContract(resData["data"] == true)) {
+                    del(o.optionDeleteOrder(apiKey, apiSecret, {
+                        identity: email,
+                        nonce: Date.now()
+                    })).then((resData) => {
+                        console.log("刪除做多之漏單");
+                        console.log(resData);
+                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                            action: "BUY",
+                            amount: String(lastBuyAmount),
+                            price: String(currentPrice),
+                            timestamp: Date.parse(new Date()),
+                            type: "LIMIT"
+                        })).then((resData) => {
+                            console.log("重新做多");
+                            console.log(resData);
+                        });
+                    });
+                } else {
+                    watchBuy = false;
+                }
+            });
+        }
+
+        /**
+         * 追蹤做空
+         */
+        if (watchSell == true) {
+            //查看所有合約
+            get(o.optionAllOrders(pair, apiKey, apiSecret, {
+                identity: email,
+                nonce: Date.now()
+            })).then((resData) => {
+                //如果尚有空單，刪除漏單並重新做空
+                if (o.hasSellContract(resData["data"] == true)) {
+                    del(o.optionDeleteOrder(apiKey, apiSecret, {
+                        identity: email,
+                        nonce: Date.now()
+                    })).then((resData) => {
+                        console.log("刪除做空之漏單");
+                        console.log(resData);
+                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                            action: "SELL",
+                            amount: String(lastSellAmount),
+                            price: String(currentPrice),
+                            timestamp: Date.parse(new Date()),
+                            type: "LIMIT"
+                        })).then((resData) => {
+                            console.log("重新做空");
+                            console.log(resData);
+                        });
+                    });
+                } else {
+                    watchSell = false;
+                }
             });
         }
 
         /**
          * 上唇 > 齒 > 下巴 & 下分形 > 上唇，為相對低點；做多
          */
-        if (alligatorUp > alligatorMiddel && alligatorMiddel > alligatorDown && fractalDown > alligatorDown) {
-            //查看所有合約
-            get(o.optionAllOrders(pair, apiKey, apiSecret, {
+        if (alligatorUp > alligatorMiddel && alligatorMiddel > alligatorDown && fractalDown > alligatorDown && buy == false) {
+            //多單要用pairBack買，所以先查看pairBack資產
+            get(o.optionAccountBalance(apiKey, apiSecret, {
                 identity: email,
                 nonce: Date.now()
             })).then((resData) => {
-                //如果已經做多，但還有多單，則取消所有交易，再次購買（為避免漏單）
-                if (switchBuy == true && o.hasBuyContract(resData["data"]) == true) {
-                    del(o.optionDeleteOrder(apiKey, apiSecret, {
-                        identity: email,
-                        nonce: Date.now()
-                    })).then((resData) => {
-                        console.log(resData);
-                        switchBuy = false;
-                    });
-                }
-                //如果尚未做多，且無多單，開始交易
-                if (switchBuy == false && o.hasBuyContract(resData["data"]) == false) {
-                    //多單要用pairBack買，所以先查看pairBack資產
-                    get(o.optionAccountBalance(apiKey, apiSecret, {
-                        identity: email,
-                        nonce: Date.now()
-                    })).then((resData) => {
-                        let data = resData["data"];
-                        let balanceBack = Number(o.getBalance(pairBack, data));
-                        let amount = balanceBack * amountPercent / currentPrice; //每次購買?%
-                        amount = o.toolRound(amount, amountRound);
-                        lastBuyAmount = amount;
-                        //購買
-                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                            action: "BUY",
-                            amount: String(amount),
-                            price: String(currentPrice),
-                            timestamp: Date.parse(new Date()),
-                            type: "LIMIT"
-                        })).then((resData) => {
-                            console.log(resData);
-                            switchBuy = true;
-                        });
-                    });
-                }
+                let data = resData["data"];
+                let balanceBack = Number(o.getBalance(pairBack, data));
+                let amount = balanceBack * amountPercent / currentPrice; //每次購買?%
+                amount = o.toolRound(amount, amountRound);
+                lastBuyAmount = amount;
+                //購買
+                post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                    action: "BUY",
+                    amount: String(amount),
+                    price: String(currentPrice),
+                    timestamp: Date.parse(new Date()),
+                    type: "LIMIT"
+                })).then((resData) => {
+                    console.log("做多");
+                    console.log(resData);
+                    buy = true;
+                    watchBuy = true;
+                });
             });
         }
 
         /**
          * 下巴 > 齒 > 上唇 & 上分形 < 上唇，為相對高點；做空
          */
-        if (alligatorDown > alligatorMiddel && alligatorMiddel > alligatorUp && fractalUp < alligatorDown) {
-            //查看所有合約
-            get(o.optionAllOrders(pair, apiKey, apiSecret, {
-                indentity: email,
+        if (alligatorDown > alligatorMiddel && alligatorMiddel > alligatorUp && fractalUp < alligatorDown && sell == false) {
+            //空單要用pairFront賣，所以先查看pairFront資產
+            get(o.optionAccountBalance(apiKey, apiSecret, {
+                identity: email,
                 nonce: Date.now()
             })).then((resData) => {
-                //如果已經做空，但還有空單，則取消所有交易，再次賣出（為避免漏單）
-                if (switchSell == true && o.hasSellContract(resData["data"]) == true) {
-                    del(o.optionDeleteOrder(apiKey, apiSecret, {
-                        identity: email,
-                        nonce: Date.now()
-                    })).then((resData) => {
-                        console.log(resData);
-                        switchSell = false;
-                    });
-                }
-                //如果尚未做空，且無空單，開始交易
-                if (switchSell == false && o.hasSellContract(resData["data"]) == false) {
-                    //空單要用pairFront賣，所以先查看pairFront資產
-                    get(o.optionAccountBalance(apiKey, apiSecret, {
-                        identity: email,
-                        nonce: Date.now()
-                    })).then((resData) => {
-                        let data = resData["data"];
-                        let balanceFront = Number(o.getBalance(pairFront, data));
-                        let amount = balanceFront * amountPercent; //每次購買?%
-                        amount = o.toolRound(amount, amountRound);
-                        lastSellAmount = amount;
-                        //賣出
-                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                            action: "SELL",
-                            amount: String(amount),
-                            price: String(currentPrice),
-                            timestamp: Date.parse(new Date()),
-                            type: "LIMIT"
-                        })).then((resData) => {
-                            console.log(resData);
-                            switchSell = true;
-                        });
-                    });
-                }
+                let data = resData["data"];
+                let balanceFront = Number(o.getBalance(pairFront, data));
+                let amount = balanceFront * amountPercent; //每次購買?%
+                amount = o.toolRound(amount, amountRound);
+                lastSellAmount = amount;
+                //賣出
+                post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                    action: "SELL",
+                    amount: String(amount),
+                    price: String(currentPrice),
+                    timestamp: Date.parse(new Date()),
+                    type: "LIMIT"
+                })).then((resData) => {
+                    console.log("做空");
+                    console.log(resData);
+                    sell = true;
+                    watchSell = true;
+                });
             });
         }
     });
