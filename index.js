@@ -20,6 +20,8 @@ let lastBuyAmount = 0;
 let lastSellAmount = 0;
 let switchBuy = false;
 let switchSell = false;
+let offsetBuy = false;
+let offsetSell = false;
 let sumBuy = 0;
 let sumSell = 0;
 let totalBalance = {};
@@ -46,74 +48,108 @@ setInterval(() => {
         console.log("總資產：", totalBalance["total"], "|", `${pairFront}：`, totalBalance["front"], "|", `${pairBack}：`, totalBalance["back"]);
 
         /**
-         * 上唇 < 齒，多頭平倉
+         * 追蹤多頭平倉
          */
-        if (alligatorUp < alligatorMiddel) {
+        if (offsetBuy == true) {
             //查看所有合約
             get(o.optionAllOrders(pair, apiKey, apiSecret, {
                 identity: email,
                 nonce: Date.now()
             })).then((resData) => {
-                //如果尚未做多，但還有平倉之空單，則取消交易，再次平倉（為避免漏單）
-                if (switchBuy == false && o.hasSellContract(resData["data"]) == true) {
+                //如果尚有空單，刪除漏單並重新平倉
+                if (o.hasSellContract(resData["data"] == true)) {
                     del(o.optionDeleteOrder(apiKey, apiSecret, {
                         identity: email,
                         nonce: Date.now()
                     })).then((resData) => {
+                        console.log("刪除多頭平倉之漏單");
                         console.log(resData);
-                        switchBuy = true;
+                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                            action: "SELL",
+                            amount: String(lastBuyAmount),
+                            price: String(currentPrice),
+                            timestamp: Date.parse(new Date()),
+                            type: "LIMIT"
+                        })).then((resData) => {
+                            console.log("重新多頭平倉");
+                            console.log(resData);
+                        });
                     });
+                } else {
+                    offsetBuy = false;
+                    sumBuy++;
                 }
-                //如果已經做多，平倉
-                if (switchBuy == true) {
-                    post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                        action: "SELL",
-                        amount: String(lastBuyAmount),
-                        price: String(currentPrice),
-                        timestamp: Date.parse(new Date()),
-                        type: "LIMIT"
+            });
+        }
+
+        /**
+         * 追蹤空頭平倉
+         */
+        if (offsetSell == true) {
+            //查看所有合約
+            get(o.optionAllOrders(pair, apiKey, apiSecret, {
+                identity: email,
+                nonce: Date.now()
+            })).then((resData) => {
+                //如果尚有多單，刪除漏單並重新平倉
+                if (o.hasBuyContract(resData["data"] == true)) {
+                    del(o.optionDeleteOrder(apiKey, apiSecret, {
+                        identity: email,
+                        nonce: Date.now()
                     })).then((resData) => {
+                        console.log("刪除空頭平倉之漏單");
                         console.log(resData);
-                        switchBuy = false;
-                        sumBuy++;
+                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                            action: "BUY",
+                            amount: String(lastSellAmount),
+                            price: String(currentPrice),
+                            timestamp: Date.parse(new Date()),
+                            type: "LIMIT"
+                        })).then((resData) => {
+                            console.log("重新空頭平倉");
+                            console.log(resData);
+                        });
                     });
+                } else {
+                    offsetSell = false;
+                    sumSell++;
                 }
+            });
+        }
+
+        /**
+         * 上唇 < 齒，多頭平倉
+         */
+        if (alligatorUp < alligatorMiddel && switchBuy == true) {
+            post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                action: "SELL",
+                amount: String(lastBuyAmount),
+                price: String(currentPrice),
+                timestamp: Date.parse(new Date()),
+                type: "LIMIT"
+            })).then((resData) => {
+                console.log("多頭平倉");
+                console.log(resData);
+                switchBuy = false;
+                offsetBuy = true;
             });
         }
 
         /**
          * 上唇 > 齒，空頭平倉
          */
-        if (alligatorUp > alligatorMiddel) {
-            //查看所有合約
-            get(o.optionAllOrders(pair, apiKey, apiSecret, {
-                identity: email,
-                nonce: Date.now()
+        if (alligatorUp > alligatorMiddel && switchSell == true) {
+            post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                action: "BUY",
+                amount: String(lastSellAmount),
+                price: String(currentPrice),
+                timestamp: Date.parse(new Date()),
+                type: "LIMIT"
             })).then((resData) => {
-                //如果尚未做空，但還有平倉之多單，則取消交易，再次平倉（為避免漏單）
-                if (switchSell == false && o.hasBuyContract(resData["data"]) == true) {
-                    del(o.optionDeleteOrder(apiKey, apiSecret, {
-                        identity: email,
-                        nonce: Date.now()
-                    })).then((resData) => {
-                        console.log(resData);
-                        switchSell = true;
-                    });
-                }
-                //如果已經做空，平倉
-                if (switchSell == true) {
-                    post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                        action: "BUY",
-                        amount: String(lastSellAmount),
-                        price: String(currentPrice),
-                        timestamp: Date.parse(new Date()),
-                        type: "LIMIT"
-                    })).then((resData) => {
-                        console.log(resData);
-                        switchSell = false;
-                        sumSell++;
-                    });
-                }
+                console.log("空頭平倉");
+                console.log(resData);
+                switchSell = false;
+                offsetSell = true;
             });
         }
 
