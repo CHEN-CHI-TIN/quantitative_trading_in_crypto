@@ -16,15 +16,18 @@ const alligatorRound = 4; //鱷魚線數值之四捨五入至小數點後?位
 const amountPercent = 0.7; //每次交易量(%)
 const amountRound = 3; //交易量深度(USDT:3)
 
-let nonce = 0;
 let lastBuyAmount = 0;
 let lastSellAmount = 0;
 let switchBuy = false;
 let switchSell = false;
 let sumBuy = 0;
 let sumSell = 0;
+let totalBalance = {};
 
 setInterval(() => {
+    //計算總資產
+    getTotalBalance();
+
     //查看歷史資料，並開始策略
     get(o.optionHistoryData(pair, resolution, timeAmount, timeUnit)).then((resData) => {
         let data = resData["data"];
@@ -40,38 +43,77 @@ setInterval(() => {
         console.log("資料量：", data.length, "|", "是否已做多：", switchBuy, "|", "是否已做空：", switchSell, "|", "總做多次數：", sumBuy, "|", "總做空次數：", sumSell);
         console.log("鱷魚下巴_SMA13：", alligatorDown, "|", "鱷魚牙齒_SMA8：", alligatorMiddel, "|", "鱷魚上唇_SMA5：", alligatorUp, "|", "上分形：", fractalUp, "|", "下分形：", fractalDown);
         console.log("當前價格：", currentPrice);
+        console.log("總資產：", totalBalance["total"], "|", `${pairFront}：`, totalBalance["front"], "|", `${pairBack}：`, totalBalance["back"]);
 
         /**
          * 上唇 < 齒，多頭平倉
          */
-        if (alligatorUp < alligatorMiddel && switchBuy == true) {
-            post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                action: "SELL",
-                amount: String(lastBuyAmount),
-                price: String(currentPrice),
-                timestamp: Date.parse(new Date()),
-                type: "LIMIT"
+        if (alligatorUp < alligatorMiddel) {
+            //查看所有合約
+            get(o.optionAllOrders(pair, apiKey, apiSecret, {
+                identity: email,
+                nonce: Date.now()
             })).then((resData) => {
-                console.log(resData);
-                switchBuy = false;
-                sumBuy++;
+                //如果尚未做多，但還有平倉之空單，則取消交易，再次平倉（為避免漏單）
+                if (switchBuy == false && o.hasSellContract(resData["data"]) == true) {
+                    del(o.optionDeleteOrder(apiKey, apiSecret, {
+                        identity: email,
+                        nonce: Date.now()
+                    })).then((resData) => {
+                        console.log(resData);
+                        switchBuy = true;
+                    });
+                }
+                //如果已經做多，平倉
+                if (switchBuy == true) {
+                    post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                        action: "SELL",
+                        amount: String(lastBuyAmount),
+                        price: String(currentPrice),
+                        timestamp: Date.parse(new Date()),
+                        type: "LIMIT"
+                    })).then((resData) => {
+                        console.log(resData);
+                        switchBuy = false;
+                        sumBuy++;
+                    });
+                }
             });
         }
 
         /**
          * 上唇 > 齒，空頭平倉
          */
-        if (alligatorUp > alligatorMiddel && switchSell == true) {
-            post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                action: "BUY",
-                amount: String(lastSellAmount),
-                price: String(currentPrice),
-                timestamp: Date.parse(new Date()),
-                type: "LIMIT"
+        if (alligatorUp > alligatorMiddel) {
+            //查看所有合約
+            get(o.optionAllOrders(pair, apiKey, apiSecret, {
+                identity: email,
+                nonce: Date.now()
             })).then((resData) => {
-                console.log(resData);
-                switchSell = false;
-                sumSell++;
+                //如果尚未做空，但還有平倉之多單，則取消交易，再次平倉（為避免漏單）
+                if (switchSell == false && o.hasBuyContract(resData["data"]) == true) {
+                    del(o.optionDeleteOrder(apiKey, apiSecret, {
+                        identity: email,
+                        nonce: Date.now()
+                    })).then((resData) => {
+                        console.log(resData);
+                        switchSell = true;
+                    });
+                }
+                //如果已經做空，平倉
+                if (switchSell == true) {
+                    post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                        action: "BUY",
+                        amount: String(lastSellAmount),
+                        price: String(currentPrice),
+                        timestamp: Date.parse(new Date()),
+                        type: "LIMIT"
+                    })).then((resData) => {
+                        console.log(resData);
+                        switchSell = false;
+                        sumSell++;
+                    });
+                }
             });
         }
 
@@ -80,29 +122,26 @@ setInterval(() => {
          */
         if (alligatorUp > alligatorMiddel && alligatorMiddel > alligatorDown && fractalDown > alligatorDown) {
             //查看所有合約
-            nonce = Date.now();
             get(o.optionAllOrders(pair, apiKey, apiSecret, {
                 identity: email,
-                nonce
+                nonce: Date.now()
             })).then((resData) => {
                 //如果已經做多，但還有多單，則取消所有交易，再次購買（為避免漏單）
                 if (switchBuy == true && o.hasBuyContract(resData["data"]) == true) {
-                    nonce = Date.now();
                     del(o.optionDeleteOrder(apiKey, apiSecret, {
                         identity: email,
-                        nonce
+                        nonce: Date.now()
                     })).then((resData) => {
                         console.log(resData);
+                        switchBuy = false;
                     });
-                    switchBuy = false;
                 }
                 //如果尚未做多，且無多單，開始交易
                 if (switchBuy == false && o.hasBuyContract(resData["data"]) == false) {
-                    //多單要用台幣買，所以先查看台幣資產
-                    nonce = Date.now();
+                    //多單要用pairBack買，所以先查看pairBack資產
                     get(o.optionAccountBalance(apiKey, apiSecret, {
                         identity: email,
-                        nonce
+                        nonce: Date.now()
                     })).then((resData) => {
                         let data = resData["data"];
                         let balanceBack = Number(o.getBalance(pairBack, data));
@@ -130,29 +169,26 @@ setInterval(() => {
          */
         if (alligatorDown > alligatorMiddel && alligatorMiddel > alligatorUp && fractalUp < alligatorDown) {
             //查看所有合約
-            nonce = Date.now();
             get(o.optionAllOrders(pair, apiKey, apiSecret, {
                 indentity: email,
-                nonce
+                nonce: Date.now()
             })).then((resData) => {
                 //如果已經做空，但還有空單，則取消所有交易，再次賣出（為避免漏單）
                 if (switchSell == true && o.hasSellContract(resData["data"]) == true) {
-                    nonce = Date.now();
                     del(o.optionDeleteOrder(apiKey, apiSecret, {
                         identity: email,
-                        nonce
+                        nonce: Date.now()
                     })).then((resData) => {
                         console.log(resData);
+                        switchSell = false;
                     });
-                    switchSell = false;
                 }
                 //如果尚未做空，且無空單，開始交易
                 if (switchSell == false && o.hasSellContract(resData["data"]) == false) {
-                    //空單要用美金賣，所以先查看美金資產
-                    nonce = Date.now();
+                    //空單要用pairFront賣，所以先查看pairFront資產
                     get(o.optionAccountBalance(apiKey, apiSecret, {
                         identity: email,
-                        nonce
+                        nonce: Date.now()
                     })).then((resData) => {
                         let data = resData["data"];
                         let balanceFront = Number(o.getBalance(pairFront, data));
@@ -207,5 +243,30 @@ async function del(option) {
                 resolve(JSON.parse(body, 0, 2));
             }
         );
+    });
+}
+
+/**
+ * 計算總資產，更動totalBalance
+ */
+function getTotalBalance() {
+    //查看帳戶資產
+    get(o.optionAccountBalance(apiKey, apiSecret, {
+        identity: email,
+        nonce: Date.now()
+    })).then((resData) => {
+        let data = resData["data"];
+        let balanceFront = Number(o.getBalance(pairFront, data));
+        let balanceBack = Number(o.getBalance(pairBack, data));
+        //查看當前匯率
+        get(o.optionHistoryData(pair, resolution, timeAmount, timeUnit)).then((resData) => {
+            let data = resData["data"];
+            let currentPrice = Number(data[data.length - 1]["close"]);
+            totalBalance = {
+                total: Math.round(balanceBack + balanceFront * currentPrice),
+                front: balanceFront,
+                back: balanceBack
+            }
+        });
     });
 }
