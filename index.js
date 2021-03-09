@@ -59,7 +59,7 @@ setInterval(() => {
                 nonce: Date.now()
             })).then((resData) => {
                 //如果尚有空單，刪除漏單並重新平倉
-                if (o.hasSellContract(resData["data"] == true)) {
+                if (o.hasSellContract(resData["data"]) == true) {
                     del(o.optionDeleteOrder(apiKey, apiSecret, {
                         identity: email,
                         nonce: Date.now()
@@ -95,7 +95,7 @@ setInterval(() => {
                 nonce: Date.now()
             })).then((resData) => {
                 //如果尚有多單，刪除漏單並重新平倉
-                if (o.hasBuyContract(resData["data"] == true)) {
+                if (o.hasBuyContract(resData["data"]) == true) {
                     del(o.optionDeleteOrder(apiKey, apiSecret, {
                         identity: email,
                         nonce: Date.now()
@@ -131,7 +131,7 @@ setInterval(() => {
                 nonce: Date.now()
             })).then((resData) => {
                 //如果尚有多單，刪除漏單並重新做多
-                if (o.hasBuyContract(resData["data"] == true)) {
+                if (o.hasBuyContract(resData["data"]) == true) {
                     del(o.optionDeleteOrder(apiKey, apiSecret, {
                         identity: email,
                         nonce: Date.now()
@@ -166,7 +166,7 @@ setInterval(() => {
                 nonce: Date.now()
             })).then((resData) => {
                 //如果尚有空單，刪除漏單並重新做空
-                if (o.hasSellContract(resData["data"] == true)) {
+                if (o.hasSellContract(resData["data"]) == true) {
                     del(o.optionDeleteOrder(apiKey, apiSecret, {
                         identity: email,
                         nonce: Date.now()

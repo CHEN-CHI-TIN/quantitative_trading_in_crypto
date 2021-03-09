@@ -35,7 +35,7 @@ module.exports = {
      */
     optionAllOrders: (pair, apiKey, apiSecret, body) => {
         return {
-            url: `https://api.bitopro.com/v3/orders/all/${pair}`,
+            url: `https://api.bitopro.com/v3/orders/${pair}`,
             headers: XBITOPRO(apiKey, apiSecret, body)
         }
     },
