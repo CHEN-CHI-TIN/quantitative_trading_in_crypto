@@ -14,8 +14,8 @@ const timeAmount = 20;
 const timeUnit = "SEC";
 const alligatorRound = 4; //鱷魚線數值之四捨五入至小數點後?位
 const amountPercent = 0.7; //每次交易量(%)
-const amountRound = 3; //交易量深度(USDT:3)
 
+let amountRound = 0;
 let lastBuyAmount = 0;
 let lastSellAmount = 0;
 let buy = false;
@@ -27,6 +27,9 @@ let watchOffsetSell = false;
 let sumBuy = 0;
 let sumSell = 0;
 let totalBalance = {};
+
+if (pairFront == "usdt") amountRound = 3;
+if (pairFront == "btc") amountRound = 8;
 
 setInterval(() => {
     //計算總資產
