@@ -236,7 +236,7 @@ setInterval(() => {
         }
 
         /**
-         * 上唇 > 齒 > 下巴 & 下分形 > 上唇，為相對低點；做多
+         * 上唇 > 齒 > 下巴 & 下分形 > 下巴，為相對低點；做多
          */
         if (alligatorUp > alligatorMiddel && alligatorMiddel > alligatorDown && fractalDown > alligatorDown && buy == false) {
             //多單要用pairBack買，所以先查看pairBack資產
@@ -266,9 +266,69 @@ setInterval(() => {
         }
 
         /**
-         * 下巴 > 齒 > 上唇 & 上分形 < 上唇，為相對高點；做空
+         * 下巴 > 齒 > 上唇 & 上分形 < 下巴，為相對高點；做空
          */
         if (alligatorDown > alligatorMiddel && alligatorMiddel > alligatorUp && fractalUp < alligatorDown && sell == false) {
+            //空單要用pairFront賣，所以先查看pairFront資產
+            get(o.optionAccountBalance(apiKey, apiSecret, {
+                identity: email,
+                nonce: Date.now()
+            })).then((resData) => {
+                let data = resData["data"];
+                let balanceFront = Number(o.getBalance(pairFront, data));
+                let amount = balanceFront * amountPercent; //每次購買?%
+                amount = o.toolRound(amount, amountRound);
+                lastSellAmount = amount;
+                //賣出
+                post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                    action: "SELL",
+                    amount: String(amount),
+                    price: String(currentPrice),
+                    timestamp: Date.parse(new Date()),
+                    type: "LIMIT"
+                })).then((resData) => {
+                    console.log("做空");
+                    console.log(resData);
+                    sell = true;
+                    watchSell = true;
+                });
+            });
+        }
+
+        /**
+         * 上唇 > 齒 > 下巴 & 當前價格 > 上分形，為強升趨勢；做多
+         */
+        if (alligatorUp > alligatorMiddel && alligatorMiddel > alligatorDown && currentPrice > fractalUp && buy == false) {
+            //多單要用pairBack買，所以先查看pairBack資產
+            get(o.optionAccountBalance(apiKey, apiSecret, {
+                identity: email,
+                nonce: Date.now()
+            })).then((resData) => {
+                let data = resData["data"];
+                let balanceBack = Number(o.getBalance(pairBack, data));
+                let amount = balanceBack * amountPercent / currentPrice; //每次購買?%
+                amount = o.toolRound(amount, amountRound);
+                lastBuyAmount = amount;
+                //購買
+                post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                    action: "BUY",
+                    amount: String(amount),
+                    price: String(currentPrice),
+                    timestamp: Date.parse(new Date()),
+                    type: "LIMIT"
+                })).then((resData) => {
+                    console.log("做多");
+                    console.log(resData);
+                    buy = true;
+                    watchBuy = true;
+                });
+            });
+        }
+
+        /**
+         * 下巴 > 齒 > 上唇 & 當前價格 < 下分形，為強跌趨勢；做空
+         */
+        if (alligatorDown > alligatorMiddel && alligatorMiddel > alligatorUp && currentPrice < fractalDown && sell == false) {
             //空單要用pairFront賣，所以先查看pairFront資產
             get(o.optionAccountBalance(apiKey, apiSecret, {
                 identity: email,
