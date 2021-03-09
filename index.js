@@ -60,22 +60,24 @@ setInterval(() => {
             })).then((resData) => {
                 //如果尚有空單，刪除漏單並重新平倉
                 if (o.hasSellContract(resData["data"]) == true) {
+                    //刪除
                     del(o.optionDeleteOrder(apiKey, apiSecret, {
                         identity: email,
                         nonce: Date.now()
                     })).then((resData) => {
                         console.log("刪除多頭平倉之漏單");
                         console.log(resData);
-                    });
-                    post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                        action: "SELL",
-                        amount: String(lastBuyAmount),
-                        price: String(currentPrice),
-                        timestamp: Date.parse(new Date()),
-                        type: "LIMIT"
-                    })).then((resData) => {
-                        console.log("重新多頭平倉");
-                        console.log(resData);
+                        //下單
+                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                            action: "SELL",
+                            amount: String(lastBuyAmount),
+                            price: String(currentPrice),
+                            timestamp: Date.parse(new Date()),
+                            type: "LIMIT"
+                        })).then((resData) => {
+                            console.log("重新多頭平倉");
+                            console.log(resData);
+                        });
                     });
                 } else {
                     console.log("確認已多頭平倉");
@@ -96,22 +98,24 @@ setInterval(() => {
             })).then((resData) => {
                 //如果尚有多單，刪除漏單並重新平倉
                 if (o.hasBuyContract(resData["data"]) == true) {
+                    //刪除
                     del(o.optionDeleteOrder(apiKey, apiSecret, {
                         identity: email,
                         nonce: Date.now()
                     })).then((resData) => {
                         console.log("刪除空頭平倉之漏單");
                         console.log(resData);
-                    });
-                    post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                        action: "BUY",
-                        amount: String(lastSellAmount),
-                        price: String(currentPrice),
-                        timestamp: Date.parse(new Date()),
-                        type: "LIMIT"
-                    })).then((resData) => {
-                        console.log("重新空頭平倉");
-                        console.log(resData);
+                        //下單
+                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                            action: "BUY",
+                            amount: String(lastSellAmount),
+                            price: String(currentPrice),
+                            timestamp: Date.parse(new Date()),
+                            type: "LIMIT"
+                        })).then((resData) => {
+                            console.log("重新空頭平倉");
+                            console.log(resData);
+                        });
                     });
                 } else {
                     console.log("確認已空頭平倉");
@@ -132,22 +136,24 @@ setInterval(() => {
             })).then((resData) => {
                 //如果尚有多單，刪除漏單並重新做多
                 if (o.hasBuyContract(resData["data"]) == true) {
+                    //刪除
                     del(o.optionDeleteOrder(apiKey, apiSecret, {
                         identity: email,
                         nonce: Date.now()
                     })).then((resData) => {
                         console.log("刪除做多之漏單");
                         console.log(resData);
-                    });
-                    post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                        action: "BUY",
-                        amount: String(lastBuyAmount),
-                        price: String(currentPrice),
-                        timestamp: Date.parse(new Date()),
-                        type: "LIMIT"
-                    })).then((resData) => {
-                        console.log("重新做多");
-                        console.log(resData);
+                        //下單
+                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                            action: "BUY",
+                            amount: String(lastBuyAmount),
+                            price: String(currentPrice),
+                            timestamp: Date.parse(new Date()),
+                            type: "LIMIT"
+                        })).then((resData) => {
+                            console.log("重新做多");
+                            console.log(resData);
+                        });
                     });
                 } else {
                     console.log("確認已做多");
@@ -167,22 +173,24 @@ setInterval(() => {
             })).then((resData) => {
                 //如果尚有空單，刪除漏單並重新做空
                 if (o.hasSellContract(resData["data"]) == true) {
+                    //刪除
                     del(o.optionDeleteOrder(apiKey, apiSecret, {
                         identity: email,
                         nonce: Date.now()
                     })).then((resData) => {
                         console.log("刪除做空之漏單");
                         console.log(resData);
-                    });
-                    post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                        action: "SELL",
-                        amount: String(lastSellAmount),
-                        price: String(currentPrice),
-                        timestamp: Date.parse(new Date()),
-                        type: "LIMIT"
-                    })).then((resData) => {
-                        console.log("重新做空");
-                        console.log(resData);
+                        //下單
+                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                            action: "SELL",
+                            amount: String(lastSellAmount),
+                            price: String(currentPrice),
+                            timestamp: Date.parse(new Date()),
+                            type: "LIMIT"
+                        })).then((resData) => {
+                            console.log("重新做空");
+                            console.log(resData);
+                        });
                     });
                 } else {
                     console.log("確認已做空");
