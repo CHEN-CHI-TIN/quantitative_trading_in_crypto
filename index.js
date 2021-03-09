@@ -66,18 +66,19 @@ setInterval(() => {
                     })).then((resData) => {
                         console.log("刪除多頭平倉之漏單");
                         console.log(resData);
-                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                            action: "SELL",
-                            amount: String(lastBuyAmount),
-                            price: String(currentPrice),
-                            timestamp: Date.parse(new Date()),
-                            type: "LIMIT"
-                        })).then((resData) => {
-                            console.log("重新多頭平倉");
-                            console.log(resData);
-                        });
+                    });
+                    post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                        action: "SELL",
+                        amount: String(lastBuyAmount),
+                        price: String(currentPrice),
+                        timestamp: Date.parse(new Date()),
+                        type: "LIMIT"
+                    })).then((resData) => {
+                        console.log("重新多頭平倉");
+                        console.log(resData);
                     });
                 } else {
+                    console.log("確認已多頭平倉");
                     watchOffsetBuy = false;
                     sumBuy++;
                 }
@@ -101,18 +102,19 @@ setInterval(() => {
                     })).then((resData) => {
                         console.log("刪除空頭平倉之漏單");
                         console.log(resData);
-                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                            action: "BUY",
-                            amount: String(lastSellAmount),
-                            price: String(currentPrice),
-                            timestamp: Date.parse(new Date()),
-                            type: "LIMIT"
-                        })).then((resData) => {
-                            console.log("重新空頭平倉");
-                            console.log(resData);
-                        });
+                    });
+                    post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                        action: "BUY",
+                        amount: String(lastSellAmount),
+                        price: String(currentPrice),
+                        timestamp: Date.parse(new Date()),
+                        type: "LIMIT"
+                    })).then((resData) => {
+                        console.log("重新空頭平倉");
+                        console.log(resData);
                     });
                 } else {
+                    console.log("確認已空頭平倉");
                     watchOffsetSell = false;
                     sumSell++;
                 }
@@ -136,18 +138,19 @@ setInterval(() => {
                     })).then((resData) => {
                         console.log("刪除做多之漏單");
                         console.log(resData);
-                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                            action: "BUY",
-                            amount: String(lastBuyAmount),
-                            price: String(currentPrice),
-                            timestamp: Date.parse(new Date()),
-                            type: "LIMIT"
-                        })).then((resData) => {
-                            console.log("重新做多");
-                            console.log(resData);
-                        });
+                    });
+                    post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                        action: "BUY",
+                        amount: String(lastBuyAmount),
+                        price: String(currentPrice),
+                        timestamp: Date.parse(new Date()),
+                        type: "LIMIT"
+                    })).then((resData) => {
+                        console.log("重新做多");
+                        console.log(resData);
                     });
                 } else {
+                    console.log("確認已做多");
                     watchBuy = false;
                 }
             });
@@ -170,18 +173,19 @@ setInterval(() => {
                     })).then((resData) => {
                         console.log("刪除做空之漏單");
                         console.log(resData);
-                        post(o.optionCreatOrder(pair, apiKey, apiSecret, {
-                            action: "SELL",
-                            amount: String(lastSellAmount),
-                            price: String(currentPrice),
-                            timestamp: Date.parse(new Date()),
-                            type: "LIMIT"
-                        })).then((resData) => {
-                            console.log("重新做空");
-                            console.log(resData);
-                        });
+                    });
+                    post(o.optionCreatOrder(pair, apiKey, apiSecret, {
+                        action: "SELL",
+                        amount: String(lastSellAmount),
+                        price: String(currentPrice),
+                        timestamp: Date.parse(new Date()),
+                        type: "LIMIT"
+                    })).then((resData) => {
+                        console.log("重新做空");
+                        console.log(resData);
                     });
                 } else {
+                    console.log("確認已做空");
                     watchSell = false;
                 }
             });
