@@ -28,14 +28,15 @@ if (pairFront == "usdt") amountRound = 3;
 if (pairFront == "btc") amountRound = 8;
 
 setInterval(() => {
-    //計算總資產
-    getTotalBalance();
-    let total = totalBalance["total"];
-    let balanceFront = totalBalance["front"];
-    let balanceBack = totalBalance["back"];
-
     //查看歷史資料，並開始策略
     get(o.optionHistoryData(pair, resolution, timeAmount, timeUnit)).then((resData) => {
+        //計算總資產
+        getTotalBalance();
+        let total = totalBalance["total"];
+        let balanceFront = totalBalance["front"];
+        let balanceBack = totalBalance["back"];
+
+        //使用歷史數據計算相關指標
         let data = resData["data"];
         let fractalUp = o.getFractalUP(o.getHighData(data));
         let fractalDown = o.getFractalDown(o.getLowData(data));
