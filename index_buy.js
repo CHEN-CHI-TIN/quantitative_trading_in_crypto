@@ -16,43 +16,43 @@ const alligatorRound = 4; //鱷魚線數值之四捨五入至小數點後?位
 const amountPercent = 1; //每次交易量(%)
 
 let amountRound = 0;
-let lastBuyAmount = 0;
-let lastSellAmount = 0;
 let buy = false;
 let watchBuy = false;
 let watchOffsetBuy = false;
 let sumBuy = 0;
-let totalBalance = {};
 
 if (pairFront == "usdt") amountRound = 3;
 if (pairFront == "btc") amountRound = 8;
 
 setInterval(() => {
-    //計算總資產
-    getTotalBalance();
-    let total = totalBalance["total"];
-    let balanceFront = totalBalance["front"];
-    let balanceBack = totalBalance["back"];
-
-    //查看歷史資料，並開始策略
-    get(o.optionHistoryData(pair, resolution, timeAmount, timeUnit)).then((resData) => {
-        //使用歷史數據計算相關指標
+    //查看帳戶資產
+    get(o.optionAccountBalance(apiKey, apiSecret, {
+        identity: email,
+        nonce: Date.now()
+    })).then((resData) => {
         let data = resData["data"];
-        let fractalUp = o.getFractalUP(o.getHighData(data));
-        let fractalDown = o.getFractalDown(o.getLowData(data));
-        let alligator = o.getAlligator(o.getCloseData(data));
-        let alligatorDown = o.toolRound(alligator["alligatorDown"], alligatorRound);
-        let alligatorMiddel = o.toolRound(alligator["alligatorMiddel"], alligatorRound);
-        let alligatorUp = o.toolRound(alligator["alligatorUp"], alligatorRound);
-        let currentPrice = alligator["currentPrice"];
+        let balanceFront = Number(o.getBalance(pairFront, data));
+        let balanceBack = Number(o.getBalance(pairBack, data));
 
-        console.log("--------------------------------------------------------------------------------------------------------------------", Date());
-        console.log("資料量：", data.length, "|", "是否已做多：", buy, "|", "總做多次數：", sumBuy);
-        console.log("鱷魚下巴_SMA13：", alligatorDown, "|", "鱷魚牙齒_SMA8：", alligatorMiddel, "|", "鱷魚上唇_SMA5：", alligatorUp);
-        console.log("當前價格：", currentPrice, "|", "上分形：", fractalUp, "|", "下分形：", fractalDown);
-        console.log("總資產：", total, "|", `${pairFront}：`, balanceFront, "|", `${pairBack}：`, balanceBack);
+        //查看歷史資料，並開始策略
+        get(o.optionHistoryData(pair, resolution, timeAmount, timeUnit)).then((resData) => {
+            //使用歷史數據計算相關指標
+            let data = resData["data"];
+            let fractalUp = o.getFractalUP(o.getHighData(data));
+            let fractalDown = o.getFractalDown(o.getLowData(data));
+            let alligator = o.getAlligator(o.getCloseData(data));
+            let alligatorDown = o.toolRound(alligator["alligatorDown"], alligatorRound);
+            let alligatorMiddel = o.toolRound(alligator["alligatorMiddel"], alligatorRound);
+            let alligatorUp = o.toolRound(alligator["alligatorUp"], alligatorRound);
+            let currentPrice = alligator["currentPrice"];
+            let totalBalance = Math.round(balanceBack + balanceFront * currentPrice);
 
-        if (total != undefined) {
+            console.log("--------------------------------------------------------------------------------------------------------------------", Date());
+            console.log("資料量：", data.length, "|", "是否已做多：", buy, "|", "總做多次數：", sumBuy);
+            console.log("鱷魚下巴_SMA13：", alligatorDown, "|", "鱷魚牙齒_SMA8：", alligatorMiddel, "|", "鱷魚上唇_SMA5：", alligatorUp);
+            console.log("當前價格：", currentPrice, "|", "上分形：", fractalUp, "|", "下分形：", fractalDown);
+            console.log("總資產：", totalBalance, "|", `${pairFront}：`, balanceFront, "|", `${pairBack}：`, balanceBack);
+
             /**
              * 追蹤多頭平倉之空單
              */
@@ -71,9 +71,7 @@ setInterval(() => {
                         })).then((resData) => {
                             console.log("刪除多頭平倉之漏單");
                             console.log(resData);
-                            //重新下單
-                            console.log("重新下單");
-                            order("SELL", lastSellAmount, currentPrice);
+                            buy = true; //重新多頭平倉之流程
                         });
                     } else {
                         console.log("確認已多頭平倉");
@@ -101,9 +99,7 @@ setInterval(() => {
                         })).then((resData) => {
                             console.log("刪除做多之漏單");
                             console.log(resData);
-                            //重新下單
-                            console.log("重新下單");
-                            order("BUY", lastBuyAmount, currentPrice);
+                            buy = false; //重新做多之流程
                         });
                     } else {
                         console.log("確認已做多");
@@ -120,7 +116,6 @@ setInterval(() => {
                 //平倉要用pairFront賣，使用pairFront資產balanceFront
                 let amount = balanceFront * amountPercent; //每次購買amountPercent
                 amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
-                lastSellAmount = amount;
                 order("SELL", amount, currentPrice); //下單
                 buy = false; //做多結束
                 watchOffsetBuy = true; //開始監視平倉之空單
@@ -134,7 +129,6 @@ setInterval(() => {
                 //多單要用pairBack買，使用pairBack資產balanceBack
                 let amount = balanceBack * amountPercent / currentPrice; //每次購買amountPercent，因使用pairFront匯率，故除於currentPrice
                 amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
-                lastBuyAmount = amount;
                 order("BUY", amount, currentPrice); //下單
                 buy = true; //已做多
                 watchBuy = true; //開始監視此多單
@@ -148,39 +142,13 @@ setInterval(() => {
                 //多單要用pairBack買，使用pairBack資產balanceBack
                 let amount = balanceBack * amountPercent / currentPrice; //每次購買amountPercent，因使用pairFront匯率，故除於currentPrice
                 amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
-                lastBuyAmount = amount;
                 order("BUY", amount, currentPrice); //下單
                 buy = true; //已做多
                 watchBuy = true; //開始監視此多單
             }
-        }
-    });
-}, timeLoop);
-
-/**
- * 計算總資產，更動totalBalance
- */
-function getTotalBalance() {
-    //查看帳戶資產
-    get(o.optionAccountBalance(apiKey, apiSecret, {
-        identity: email,
-        nonce: Date.now()
-    })).then((resData) => {
-        let data = resData["data"];
-        let balanceFront = Number(o.getBalance(pairFront, data));
-        let balanceBack = Number(o.getBalance(pairBack, data));
-        //查看當前匯率
-        get(o.optionHistoryData(pair, resolution, timeAmount, timeUnit)).then((resData) => {
-            let data = resData["data"];
-            let currentPrice = Number(data[data.length - 1]["close"]);
-            totalBalance = {
-                total: Math.round(balanceBack + balanceFront * currentPrice),
-                front: balanceFront,
-                back: balanceBack
-            }
         });
     });
-}
+}, timeLoop);
 
 /**
  * 交易: "BUY", "SELL"
