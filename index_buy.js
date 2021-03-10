@@ -5,7 +5,7 @@ const email = "timmybrick@icloud.com";
 const apiKey = "2a4f6d473376f0dd36baf629bcd1d21b";
 const apiSecret = "$2a$12$YW1s2uH1Fpn1rThxfYf9LOSQ53DkVb8VqiT4/rlj/o/RI9TZYHCRi";
 
-const timeLoop = 5000; //更新頻率
+const timeLoop = 5000; //更新頻率(毫秒)
 const pairFront = "btc";
 const pairBack = "twd";
 const pair = pairFront + "_" + pairBack;
@@ -38,13 +38,13 @@ setInterval(() => {
         get(o.optionHistoryData(pair, resolution, timeAmount, timeUnit)).then((resData) => {
             //使用歷史數據計算相關指標
             let data = resData["data"];
-            let fractalUp = o.getFractalUP(o.getHighData(data));
-            let fractalDown = o.getFractalDown(o.getLowData(data));
-            let alligator = o.getAlligator(o.getCloseData(data));
-            let alligatorDown = o.toolRound(alligator["alligatorDown"], alligatorRound);
-            let alligatorMiddel = o.toolRound(alligator["alligatorMiddel"], alligatorRound);
-            let alligatorUp = o.toolRound(alligator["alligatorUp"], alligatorRound);
-            let currentPrice = alligator["currentPrice"];
+            let fractalUp = o.getFractalUP(o.getHighData(data)); //上分形
+            let fractalDown = o.getFractalDown(o.getLowData(data)); //下分形
+            let alligator = o.getAlligator(o.getCloseData(data)); //鱷魚線
+            let alligatorDown = o.toolRound(alligator["alligatorDown"], alligatorRound); //下巴(SMA13)
+            let alligatorMiddel = o.toolRound(alligator["alligatorMiddel"], alligatorRound); //牙齒(SMA8)
+            let alligatorUp = o.toolRound(alligator["alligatorUp"], alligatorRound); //上唇(SMA5)
+            let currentPrice = alligator["currentPrice"]; //當前價格
             let totalBalance = Math.round(balanceBack + balanceFront * currentPrice);
 
             console.log("--------------------------------------------------------------------------------------------------------------------", Date());
