@@ -72,6 +72,7 @@ setInterval(() => {
                             console.log("刪除多頭平倉之漏單");
                             console.log(resData);
                             buy = true; //重新多頭平倉之流程
+                            watchOffsetBuy = false;
                         });
                     } else {
                         console.log("確認已多頭平倉");
@@ -100,6 +101,7 @@ setInterval(() => {
                             console.log("刪除做多之漏單");
                             console.log(resData);
                             buy = false; //重新做多之流程
+                            watchBuy = false;
                         });
                     } else {
                         console.log("確認已做多");
@@ -134,18 +136,18 @@ setInterval(() => {
                 watchBuy = true; //開始監視此多單
             }
 
-            // /**
-            //  * 上唇 > 齒 > 下巴 & 當前價格 > 上分形，為強升趨勢；做多
-            //  */
-            // if (alligatorUp > alligatorMiddel && alligatorMiddel > alligatorDown && currentPrice > fractalUp && buy == false) {
-            //     console.log("上唇 > 齒 > 下巴 & 當前價格 > 上分形，為強升趨勢；做多");
-            //     //多單要用pairBack買，使用pairBack資產balanceBack
-            //     let amount = balanceBack * amountPercent / currentPrice; //每次購買amountPercent，因使用pairFront匯率，故除於currentPrice
-            //     amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
-            //     order("BUY", amount, currentPrice); //下單
-            //     buy = true; //已做多
-            //     watchBuy = true; //開始監視此多單
-            // }
+            /**
+             * 上唇 > 齒 > 下巴 & 當前價格 > 上分形，為強升趨勢；做多
+             */
+            if (alligatorUp > alligatorMiddel && alligatorMiddel > alligatorDown && currentPrice > fractalUp && buy == false) {
+                console.log("上唇 > 齒 > 下巴 & 當前價格 > 上分形，為強升趨勢；做多");
+                //多單要用pairBack買，使用pairBack資產balanceBack
+                let amount = balanceBack * amountPercent / currentPrice; //每次購買amountPercent，因使用pairFront匯率，故除於currentPrice
+                amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
+                order("BUY", amount, currentPrice); //下單
+                buy = true; //已做多
+                watchBuy = true; //開始監視此多單
+            }
         });
     });
 }, timeLoop);
