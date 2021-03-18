@@ -11,49 +11,18 @@ const timeAmount = 10; //資料量(多少時間內)
 const timeUnit = "MIN"; //資料量之時間單位
 const alligatorRound = 4; //鱷魚線數值之四捨五入至小數點後?位
 const amountPercent = 1; //每次交易量(%)
+const amountRound = 8; //下單量之小數點位數
+const profitForOffest = 0.5; //收益超過總資產之?將平倉(%)
 
-//幣種
 const pair_01 = "btc";
 const pair_02 = "usdt";
-const pair_03 = "bcd";
-const pair_04 = "bch";
-const pair_05 = "bchsv";
-const pair_06 = "bito";
-const pair_07 = "bnb";
-const pair_08 = "cgp";
-const pair_09 = "eos";
-const pair_10 = "eth";
-const pair_11 = "ltc";
-const pair_12 = "paxg";
-const pair_13 = "trx";
-const pair_14 = "xaut";
-const pair_15 = "xrp";
-const pair_16 = "yfi";
+const pair_03 = "bito";
+const pair_04 = "bnb";
+const pair_05 = "eos";
+const pair_06 = "eth";
+const pair_07 = "ltc";
+const pair_08 = "yfi";
 
-/**
- * 下單量之小數點位數
- * @param {string} pairFront
- */
-const amountRound = (pairFront) => {
-    if (pairFront == pair_01) return 8;
-    if (pairFront == pair_02) return 3;
-    if (pairFront == pair_03) return 3;
-    if (pairFront == pair_04) return 4;
-    if (pairFront == pair_05) return 4;
-    if (pairFront == pair_06) return 3;
-    if (pairFront == pair_07) return 4;
-    if (pairFront == pair_08) return 3;
-    if (pairFront == pair_09) return 3;
-    if (pairFront == pair_10) return 4;
-    if (pairFront == pair_11) return 4;
-    if (pairFront == pair_12) return 5;
-    if (pairFront == pair_13) return 3;
-    if (pairFront == pair_14) return 5;
-    if (pairFront == pair_15) return 3;
-    if (pairFront == pair_16) return 6;
-}
-
-//幣種切換
 let lockPair = false;
 let switchPair_01 = true;
 let switchPair_02 = false;
@@ -63,20 +32,13 @@ let switchPair_05 = false;
 let switchPair_06 = false;
 let switchPair_07 = false;
 let switchPair_08 = false;
-let switchPair_09 = false;
-let switchPair_10 = false;
-let switchPair_11 = false;
-let switchPair_12 = false;
-let switchPair_13 = false;
-let switchPair_14 = false;
-let switchPair_15 = false;
-let switchPair_16 = false;
-
-let pairFront = "";
 let buy = false;
 let watchBuy = false;
 let watchOffsetBuy = false;
+let pairFront = "";
 let sumBuy = 0;
+let lastBalance = 0;
+let totalProfit = 0;
 
 setInterval(() => {
     if (lockPair == false) {
@@ -111,38 +73,6 @@ setInterval(() => {
         } else if (switchPair_08 == true) {
             pairFront = pair_08;
             switchPair_08 = false;
-            switchPair_09 = true;
-        } else if (switchPair_09 == true) {
-            pairFront = pair_09;
-            switchPair_09 = false;
-            switchPair_10 = true;
-        } else if (switchPair_10 == true) {
-            pairFront = pair_10;
-            switchPair_10 = false;
-            switchPair_11 = true;
-        } else if (switchPair_11 == true) {
-            pairFront = pair_11;
-            switchPair_11 = false;
-            switchPair_12 = true;
-        } else if (switchPair_12 == true) {
-            pairFront = pair_12;
-            switchPair_12 = false;
-            switchPair_13 = true;
-        } else if (switchPair_13 == true) {
-            pairFront = pair_13;
-            switchPair_13 = false;
-            switchPair_14 = true;
-        } else if (switchPair_14 == true) {
-            pairFront = pair_14;
-            switchPair_14 = false;
-            switchPair_15 = true;
-        } else if (switchPair_15 == true) {
-            pairFront = pair_15;
-            switchPair_15 = false;
-            switchPair_16 = true;
-        } else if (switchPair_16 == true) {
-            pairFront = pair_16;
-            switchPair_16 = false;
             switchPair_01 = true;
         }
     }
@@ -167,14 +97,15 @@ setInterval(() => {
             let alligatorMiddel = o.toolRound(alligator["alligatorMiddel"], alligatorRound); //牙齒(SMA8)
             let alligatorUp = o.toolRound(alligator["alligatorUp"], alligatorRound); //上唇(SMA5)
             let currentPrice = alligator["currentPrice"]; //當前價格
-            let totalBalance = Math.round(balanceBack + balanceFront * currentPrice);
+            let currentBalance = Math.round(balanceBack + balanceFront * currentPrice);
 
-            console.log("----------------------------------------------------------------------------------------------------------");
+            console.log("-------------------------------------------------------------------------------------------");
             console.log(Date());
             console.log("當前貨幣對：", pair(pairFront, pairBack), "|", "資料量：", data.length, "|", "是否已做多：", buy, "|", "總做多次數：", sumBuy);
             console.log("鱷魚下巴_SMA13：", alligatorDown, "|", "鱷魚牙齒_SMA8：", alligatorMiddel, "|", "鱷魚上唇_SMA5：", alligatorUp);
             console.log("當前價格：", currentPrice, "|", "上分形：", fractalUp, "|", "下分形：", fractalDown);
-            console.log("總資產：", totalBalance, "|", `${pairFront}：`, balanceFront, "|", `${pairBack}：`, balanceBack);
+            console.log("當前資產：", currentBalance, "|", `${pairFront}：`, balanceFront, "|", `${pairBack}：`, balanceBack);
+            console.log("平倉前之資產：", lastBalance, "|", "總收益：", totalProfit);
 
             /**
              * 追蹤多頭平倉之空單
@@ -202,6 +133,7 @@ setInterval(() => {
                         watchOffsetBuy = false;
                         sumBuy++;
                         lockPair = false; //解除鎖定幣種
+                        totalProfit = currentBalance - lastBalance;
                     }
                 });
             }
@@ -230,8 +162,22 @@ setInterval(() => {
                     } else {
                         console.log("確認已做多");
                         watchBuy = false;
+                        lastBalance = currentBalance;
                     }
                 });
+            }
+
+            /**
+             * 收益超過profitForOffest，多頭平倉
+             */
+            if (currentBalance - lastBalance >= currentBalance / 100 * profitForOffest && buy == true && watchBuy == false) {
+                console(`收益超過${profitForOffest}，多頭平倉`);
+                //平倉要用pairFront賣，使用pairFront資產balanceFront
+                let amount = balanceFront * amountPercent; //每次購買amountPercent
+                amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
+                order("SELL", amount, currentPrice); //下單
+                buy = false; //做多結束
+                watchOffsetBuy = true; //開始監視平倉之空單
             }
 
             /**
@@ -241,7 +187,7 @@ setInterval(() => {
                 console.log("上唇 < 齒，多頭平倉");
                 //平倉要用pairFront賣，使用pairFront資產balanceFront
                 let amount = balanceFront * amountPercent; //每次購買amountPercent
-                amount = o.toolRound(amount, amountRound(pairFront)); //四捨五入至amountRound位
+                amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
                 order("SELL", amount, currentPrice); //下單
                 buy = false; //做多結束
                 watchOffsetBuy = true; //開始監視平倉之空單
@@ -254,7 +200,7 @@ setInterval(() => {
                 console.log("上唇 > 齒 > 下巴 & 下分形 > 下巴，為相對低點；做多");
                 //多單要用pairBack買，使用pairBack資產balanceBack
                 let amount = balanceBack * amountPercent / currentPrice; //每次購買amountPercent，因使用pairFront匯率，故除於currentPrice
-                amount = o.toolRound(amount, amountRound(pairFront)); //四捨五入至amountRound位
+                amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
                 order("BUY", amount, currentPrice); //下單
                 buy = true; //已做多
                 watchBuy = true; //開始監視此多單
@@ -262,13 +208,13 @@ setInterval(() => {
             }
 
             /**
-             * 上唇 > 齒 > 下巴 & 當前價格 > 上分形，為強升趨勢；做多
+             * 上分形 > 鱷魚線 & 當前價格 > 上分形，為強升趨勢；做多
              */
-            if (alligatorUp > alligatorMiddel && alligatorMiddel > alligatorDown && currentPrice > fractalUp && buy == false) {
-                console.log("上唇 > 齒 > 下巴 & 當前價格 > 上分形，為強升趨勢；做多");
+            if (fractalUp > alligatorUp && fractalUp > alligatorMiddel && fractalUp > alligatorDown && currentPrice > fractalUp && buy == false) {
+                console.log("上分形 > 鱷魚線 & 當前價格 > 上分形，為強升趨勢；做多");
                 //多單要用pairBack買，使用pairBack資產balanceBack
                 let amount = balanceBack * amountPercent / currentPrice; //每次購買amountPercent，因使用pairFront匯率，故除於currentPrice
-                amount = o.toolRound(amount, amountRound(pairFront)); //四捨五入至amountRound位
+                amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
                 order("BUY", amount, currentPrice); //下單
                 buy = true; //已做多
                 watchBuy = true; //開始監視此多單
