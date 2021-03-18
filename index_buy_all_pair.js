@@ -170,7 +170,7 @@ setInterval(() => {
             /**
              * 收益超過profitForOffest，多頭平倉
              */
-            if (currentBalance - lastBalance >= currentBalance / 100 * profitForOffest && buy == true && watchBuy == false) {
+            if (currentBalance - lastBalance >= lastBalance / 100 * profitForOffest && buy == true && watchBuy == false) {
                 console(`收益超過${profitForOffest}，多頭平倉`);
                 //平倉要用pairFront賣，使用pairFront資產balanceFront
                 let amount = balanceFront * amountPercent; //每次購買amountPercent
