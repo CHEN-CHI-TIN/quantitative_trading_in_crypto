@@ -1,5 +1,6 @@
 const o = require("./wheel");
 const request = require("request");
+const fs = require("fs");
 
 const email = "timmybrick@icloud.com";
 const apiKey = "2a4f6d473376f0dd36baf629bcd1d21b";
@@ -106,6 +107,7 @@ setInterval(() => {
             console.log("當前價格：", currentPrice, "|", "上分形：", fractalUp, "|", "下分形：", fractalDown);
             console.log("當前資產：", currentBalance, "|", `${pairFront}：`, balanceFront, "|", `${pairBack}：`, balanceBack);
             console.log("平倉前之資產：", lastBalance, "|", "總收益：", totalProfit);
+            fs.writeFile("./totalProfit.txt", totalProfit, () => {});
 
             /**
              * 追蹤多頭平倉之空單
@@ -158,10 +160,12 @@ setInterval(() => {
                             console.log(resData);
                             buy = false; //重新做多之流程
                             watchBuy = false;
+                            lockPair = false; //解除鎖定幣種，使下一循環開始為新幣種
                         });
                     } else {
                         console.log("確認已做多");
                         watchBuy = false;
+                        lockPair = true; //若已確認做多，鎖定幣種直至平倉
                     }
                 });
             }
@@ -205,11 +209,6 @@ setInterval(() => {
                 watchBuy = true; //開始監視此多單
                 lockPair = true; //鎖定幣種
                 lastBalance = currentBalance; //記錄平倉前之資產
-            } else if (alligatorUp < alligatorMiddel || alligatorMiddel < alligatorDown || fractalDown < alligatorDown) {
-                //若下單訊號失效後仍未下單成功，解除鎖定幣種
-                if (buy == false && lockPair == true) {
-                    lockPair = false;
-                }
             }
 
             /**
@@ -225,11 +224,6 @@ setInterval(() => {
                 watchBuy = true; //開始監視此多單
                 lockPair = true; //鎖定幣種
                 lastBalance = currentBalance; //記錄平倉前之資產
-            } else if (fractalUp < alligatorUp || fractalUp < alligatorMiddel || fractalUp < alligatorDown || currentPrice < fractalUp) {
-                //若下單訊號失效後仍未下單成功，解除鎖定幣種
-                if (buy == false && lockPair == true) {
-                    lockPair = false;
-                }
             }
         });
     });
