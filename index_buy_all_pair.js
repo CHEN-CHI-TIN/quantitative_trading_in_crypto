@@ -133,7 +133,7 @@ setInterval(() => {
                         watchOffsetBuy = false;
                         sumBuy++;
                         lockPair = false; //解除鎖定幣種
-                        totalProfit = currentBalance - lastBalance;
+                        totalProfit = totalProfit + currentBalance - lastBalance;
                     }
                 });
             }
