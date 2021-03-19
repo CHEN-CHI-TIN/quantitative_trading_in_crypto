@@ -97,7 +97,7 @@ setInterval(() => {
             let alligatorMiddel = o.toolRound(alligator["alligatorMiddel"], alligatorRound); //牙齒(SMA8)
             let alligatorUp = o.toolRound(alligator["alligatorUp"], alligatorRound); //上唇(SMA5)
             let currentPrice = alligator["currentPrice"]; //當前價格
-            let currentBalance = Math.round(balanceBack + balanceFront * currentPrice);
+            let currentBalance = Math.floor(balanceBack + balanceFront * currentPrice); //當前總資產(無條件捨去)
 
             console.log("-------------------------------------------------------------------------------------------");
             console.log(Date());
@@ -162,23 +162,22 @@ setInterval(() => {
                     } else {
                         console.log("確認已做多");
                         watchBuy = false;
-                        lastBalance = currentBalance;
                     }
                 });
             }
 
-            /**
-             * 收益超過profitForOffest，多頭平倉
-             */
-            if (currentBalance - lastBalance >= lastBalance / 100 * profitForOffest && buy == true && watchBuy == false) {
-                console(`收益超過${profitForOffest}，多頭平倉`);
-                //平倉要用pairFront賣，使用pairFront資產balanceFront
-                let amount = balanceFront * amountPercent; //每次購買amountPercent
-                amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
-                order("SELL", amount, currentPrice); //下單
-                buy = false; //做多結束
-                watchOffsetBuy = true; //開始監視平倉之空單
-            }
+            // /**
+            //  * 收益超過profitForOffest，多頭平倉
+            //  */
+            // if (currentBalance - lastBalance >= lastBalance / 100 * profitForOffest && buy == true && watchBuy == false) {
+            //     console(`收益超過${profitForOffest}，多頭平倉`);
+            //     //平倉要用pairFront賣，使用pairFront資產balanceFront
+            //     let amount = balanceFront * amountPercent; //每次購買amountPercent
+            //     amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
+            //     order("SELL", amount, currentPrice); //下單
+            //     buy = false; //做多結束
+            //     watchOffsetBuy = true; //開始監視平倉之空單
+            // }
 
             /**
              * 上唇 < 齒，多頭平倉
@@ -205,6 +204,12 @@ setInterval(() => {
                 buy = true; //已做多
                 watchBuy = true; //開始監視此多單
                 lockPair = true; //鎖定幣種
+                lastBalance = currentBalance; //記錄平倉前之資產
+            } else if (alligatorUp < alligatorMiddel || alligatorMiddel < alligatorDown || fractalDown < alligatorDown) {
+                //若下單訊號失效後仍未下單成功，解除鎖定幣種
+                if (buy == false && lockPair == true) {
+                    lockPair = false;
+                }
             }
 
             /**
@@ -219,6 +224,12 @@ setInterval(() => {
                 buy = true; //已做多
                 watchBuy = true; //開始監視此多單
                 lockPair = true; //鎖定幣種
+                lastBalance = currentBalance; //記錄平倉前之資產
+            } else if (fractalUp < alligatorUp || fractalUp < alligatorMiddel || fractalUp < alligatorDown || currentPrice < fractalUp) {
+                //若下單訊號失效後仍未下單成功，解除鎖定幣種
+                if (buy == false && lockPair == true) {
+                    lockPair = false;
+                }
             }
         });
     });
