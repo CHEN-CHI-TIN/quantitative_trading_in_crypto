@@ -73,12 +73,14 @@ setInterval(() => {
                             identity: email,
                             nonce: Date.now()
                         })).then((resData) => {
+                            console.log(Date());
                             console.log("刪除多頭平倉之漏單");
                             console.log(resData);
                             buy = true; //重新多頭平倉之流程
                             watchOffsetBuy = false;
                         });
                     } else {
+                        console.log(Date());
                         console.log("確認已多頭平倉");
                         watchOffsetBuy = false;
                         lockPair = false; //解除鎖定幣種
@@ -102,6 +104,7 @@ setInterval(() => {
                             identity: email,
                             nonce: Date.now()
                         })).then((resData) => {
+                            console.log(Date());
                             console.log("刪除做多之漏單");
                             console.log(resData);
                             buy = false; //重新做多之流程
@@ -109,6 +112,7 @@ setInterval(() => {
                             lockPair = false; //解除鎖定幣種，使下一循環開始為新幣種
                         });
                     } else {
+                        console.log(Date());
                         console.log("確認已做多");
                         watchBuy = false;
                         lockPair = true; //若已確認做多，鎖定幣種直至平倉
@@ -120,6 +124,7 @@ setInterval(() => {
              * 上唇 < 齒，多頭平倉
              */
             if (alligatorUp < alligatorMiddel && buy == true && watchBuy == false) {
+                console.log(Date());
                 console.log("上唇 < 齒，多頭平倉");
                 //平倉要用pairFront賣，使用pairFront資產balanceFront
                 let amount = balanceFront * amountPercent; //每次購買amountPercent
@@ -133,6 +138,7 @@ setInterval(() => {
              * 上唇 > 齒 > 下巴 & 下分形 > 下巴，為相對低點；做多
              */
             if (alligatorUp > alligatorMiddel && alligatorMiddel > alligatorDown && fractalDown > alligatorDown && buy == false) {
+                console.log(Date());
                 console.log("上唇 > 齒 > 下巴 & 下分形 > 下巴，為相對低點；做多");
                 //多單要用pairBack買，使用pairBack資產balanceBack
                 let amount = balanceBack * amountPercent / currentPrice; //每次購買amountPercent，因使用pairFront匯率，故除於currentPrice
