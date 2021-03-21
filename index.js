@@ -139,9 +139,9 @@ setInterval(() => {
             }
 
             /**
-             * 上分形 > 鱷魚線 & 下分形 < 鱷魚線，多頭平倉
+             * 上分形 > 鱷魚線 & 下分形 < 鱷魚線 & 下巴 < 齒、上唇，糾纏狀態，多頭平倉
              */
-            if (fractalUp > alligatorMax && fractalDown < alligatorMin && buy == true && watchBuy == false) {
+            if (fractalUp > alligatorMax && fractalDown < alligatorMin && alligatorDown < alligatorMiddel && alligatorDown < alligatorUp && buy == true && watchBuy == false) {
                 console.log(Date());
                 console.log("上分形 > 鱷魚線 & 下分形 < 鱷魚線，多頭平倉");
                 //平倉要用pairFront賣，使用pairFront資產balanceFront
