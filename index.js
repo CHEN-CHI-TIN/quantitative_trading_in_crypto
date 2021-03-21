@@ -56,6 +56,7 @@ setInterval(() => {
         get(o.optionHistoryData(pair(pairFront, pairBack), resolution, timeAmount, timeUnit)).then((resData) => {
             //使用歷史數據計算相關指標
             let data = resData["data"];
+            let fractalUp = o.getFractalUP(o.getHighData(data)); //上分形
             let fractalDown = o.getFractalDown(o.getLowData(data)); //下分形
             let alligator = o.getAlligator(o.getCloseData(data)); //鱷魚線
             let alligatorDown = o.toolRound(alligator["alligatorDown"], alligatorRound); //下巴(SMA13)
