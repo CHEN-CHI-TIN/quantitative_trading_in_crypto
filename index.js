@@ -21,6 +21,7 @@ let lockPair = false;
 let switchPair_01 = true;
 let switchPair_02 = false;
 let switchPair_03 = false;
+let bear = false;
 let buy = false;
 let watchBuy = false;
 let watchOffsetBuy = false;
@@ -28,6 +29,7 @@ let pairFront = "";
 
 setInterval(() => {
     if (lockPair == false) {
+        bear = false;
         if (switchPair_01 == true) {
             pairFront = pair_01;
             switchPair_01 = false;
@@ -56,12 +58,22 @@ setInterval(() => {
         get(o.optionHistoryData(pair(pairFront, pairBack), resolution, timeAmount, timeUnit)).then((resData) => {
             //使用歷史數據計算相關指標
             let data = resData["data"];
+            let fractalUp = o.getFractalUP(o.getHighData(data)); //上分形
             let fractalDown = o.getFractalDown(o.getLowData(data)); //下分形
             let alligator = o.getAlligator(o.getCloseData(data)); //鱷魚線
             let alligatorDown = o.toolRound(alligator["alligatorDown"], alligatorRound); //下巴(SMA13)
             let alligatorMiddel = o.toolRound(alligator["alligatorMiddel"], alligatorRound); //牙齒(SMA8)
             let alligatorUp = o.toolRound(alligator["alligatorUp"], alligatorRound); //上唇(SMA5)
+            let alligatorMax = Math.max(alligatorDown, alligatorMiddel, alligatorUp); //鱷魚線最大值
+            let alligatorMin = Math.min(alligatorDown, alligatorMiddel, alligatorUp); //鱷魚線最小值
             let currentPrice = alligator["currentPrice"]; //當前價格
+
+            /**
+             * 上分形、下分形 < 下巴，處於熊市觀望做多訊號
+             */
+            if (fractalUp < alligatorDown && fractalDown < alligatorDown) {
+                bear = true;
+            }
 
             /**
              * 追蹤多頭平倉之空單
@@ -127,11 +139,11 @@ setInterval(() => {
             }
 
             /**
-             * 上唇 < 下巴，多頭平倉
+             * 上分形 > 鱷魚線 & 下分形 < 鱷魚線，多頭平倉
              */
-            if (alligatorUp < alligatorDown && buy == true && watchBuy == false) {
+            if (fractalUp > alligatorMax && fractalDown < alligatorMin && buy == true && watchBuy == false) {
                 console.log(Date());
-                console.log("上唇 < 下巴，多頭平倉");
+                console.log("上分形 > 鱷魚線 & 下分形 < 鱷魚線，多頭平倉");
                 //平倉要用pairFront賣，使用pairFront資產balanceFront
                 let amount = balanceFront * amountPercent; //每次購買amountPercent
                 amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
@@ -141,11 +153,11 @@ setInterval(() => {
             }
 
             /**
-             * 上唇 > 齒 > 下巴 & 下分形 > 下巴 & 下分形 < 齒，為相對低點；做多
+             * 處於熊市 & 當前價格 > 鱷魚線，做多
              */
-            if (alligatorUp > alligatorMiddel && alligatorMiddel > alligatorDown && fractalDown > alligatorDown && fractalDown < alligatorMiddel && buy == false) {
+            if (bear == true && currentPrice > alligatorMax && buy == false) {
                 console.log(Date());
-                console.log("上唇 > 齒 > 下巴 & 下分形 > 下巴 & 下分形 < 齒，為相對低點；做多");
+                console.log("處於熊市 & 當前價格 > 鱷魚線，做多");
                 //多單要用pairBack買，使用pairBack資產balanceBack
                 let amount = balanceBack * amountPercent / currentPrice; //每次購買amountPercent，因使用pairFront匯率，故除於currentPrice
                 amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
