@@ -70,11 +70,6 @@ setInterval(() => {
             // let alligatorMin = Math.min(alligatorDown, alligatorMiddel, alligatorUp); //鱷魚線最小值
             let currentPrice = alligator["currentPrice"]; //當前價格
 
-            console.log("--------------------------------------------------", "|", Date());
-            console.log("pairFront：", pairFront, "|", "currentPrice：", currentPrice);
-            console.log("fractalUp：", fractalUp, "|", "fractalDown：", fractalDown);
-            console.log("alligatorDown：", alligatorDown, "|", "alligatorMiddel：", alligatorMiddel, "|", "alligatorUp：", alligatorUp);
-
             /**
              * 上分形、下分形 < 下巴，處於熊市觀望做多訊號
              */
@@ -96,6 +91,11 @@ setInterval(() => {
             } else {
                 bear = false;
             }
+
+            console.log("--------------------------------------------------", "|", Date());
+            console.log("pairFront：", pairFront, "|", "currentPrice：", currentPrice, "|", "bear：", bear);
+            console.log("fractalUp：", fractalUp, "|", "fractalDown：", fractalDown);
+            console.log("alligatorDown：", alligatorDown, "|", "alligatorMiddel：", alligatorMiddel, "|", "alligatorUp：", alligatorUp);
 
             /**
              * 追蹤多頭平倉之空單
