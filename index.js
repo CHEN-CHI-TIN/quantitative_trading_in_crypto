@@ -10,8 +10,9 @@ const resolution = "30m"; //K線單位
 const timeAmount = 10; //資料量(多少時間內)
 const timeUnit = "MIN"; //資料量之時間單位
 const alligatorRound = 4; //鱷魚線數值之四捨五入至小數點後?位
-const amountPercent = 1; //每次交易量(%)
+const amountSize = 1; //每次交易量(1為全部)
 const amountRound = 8; //下單量之小數點位數
+const goal = 1; //收益超過總資產之?將平倉(%)
 
 const pair_01 = "btc";
 const pair_02 = "usdt";
@@ -29,6 +30,7 @@ let buy = false;
 let watchBuy = false;
 let watchOffsetBuy = false;
 let pairFront = "";
+let balanceBeforeBuy = 0;
 
 setInterval(() => {
     if (lockPair == false) {
@@ -66,14 +68,15 @@ setInterval(() => {
             let alligatorDown = o.toolRound(alligator["alligatorDown"], alligatorRound); //下巴(SMA13)
             let alligatorMiddel = o.toolRound(alligator["alligatorMiddel"], alligatorRound); //牙齒(SMA8)
             let alligatorUp = o.toolRound(alligator["alligatorUp"], alligatorRound); //上唇(SMA5)
-            // let alligatorMax = Math.max(alligatorDown, alligatorMiddel, alligatorUp); //鱷魚線最大值
-            // let alligatorMin = Math.min(alligatorDown, alligatorMiddel, alligatorUp); //鱷魚線最小值
+            let alligatorMax = Math.max(alligatorDown, alligatorMiddel, alligatorUp); //鱷魚線最大值
+            let alligatorMin = Math.min(alligatorDown, alligatorMiddel, alligatorUp); //鱷魚線最小值
             let currentPrice = alligator["currentPrice"]; //當前價格
+            let balanceCurrent = Math.floor(balanceBack + balanceFront * currentPrice); //當前總資產(無條件捨去)
 
             /**
-             * 上分形、下分形 < 下巴，處於熊市觀望做多訊號
+             * 上分形、下分形 < 鱷魚線，處於熊市觀望做多訊號
              */
-            if (fractalUp < alligatorDown && fractalDown < alligatorDown) {
+            if (fractalUp < alligatorMax && fractalDown < alligatorMax) {
                 if (pairFront == pair_01) {
                     bear_01 = true;
                 } else if (pairFront == pair_02) {
@@ -94,6 +97,7 @@ setInterval(() => {
 
             console.log("--------------------------------------------------", "|", Date());
             console.log("pairFront：", pairFront, "|", "currentPrice：", currentPrice, "|", "bear：", bear);
+            console.log("balanceCurrent：", balanceCurrent, "|", "balanceBeforeBuy：", balanceBeforeBuy);
             console.log("fractalUp：", fractalUp, "|", "fractalDown：", fractalDown);
             console.log("alligatorDown：", alligatorDown, "|", "alligatorMiddel：", alligatorMiddel, "|", "alligatorUp：", alligatorUp);
 
@@ -160,12 +164,12 @@ setInterval(() => {
             }
 
             /**
-             * 上唇、齒 > 下巴 & 當前價格 < 下分形，多頭平倉
+             * 收益超過goal，多頭平倉
              */
-            if (alligatorUp > alligatorDown && alligatorMiddel > alligatorDown && currentPrice < fractalDown && buy == true && watchBuy == false) {
-                console.log("上唇、齒 > 下巴 & 當前價格 < 下分形，多頭平倉");
+            if (balanceCurrent - balanceBeforeBuy >= balanceBeforeBuy / 100 * goal && buy == true && watchBuy == false) {
+                console.log("收益超過goal，多頭平倉");
                 //平倉要用pairFront賣，使用pairFront資產balanceFront
-                let amount = balanceFront * amountPercent; //每次購買amountPercent
+                let amount = balanceFront * amountSize; //每次購買amountPercent
                 amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
                 order("SELL", amount, currentPrice); //下單
                 buy = false; //做多結束
@@ -173,17 +177,31 @@ setInterval(() => {
             }
 
             /**
-             * 處於熊市 & 當前價格 > 上分形，做多
+             * 上分形、下分形 < 鱷魚線，多頭平倉
              */
-            if (bear == true && currentPrice > fractalUp && buy == false) {
-                console.log("處於熊市 & 當前價格 > 上分形，做多");
+            if (fractalUp < alligatorMax && fractalDown < alligatorMax && buy == true && watchBuy == false) {
+                console.log("上分形、下分形 < 鱷魚線，多頭平倉");
+                //平倉要用pairFront賣，使用pairFront資產balanceFront
+                let amount = balanceFront * amountSize; //每次購買amountPercent
+                amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
+                order("SELL", amount, currentPrice); //下單
+                buy = false; //做多結束
+                watchOffsetBuy = true; //開始監視平倉之空單
+            }
+
+            /**
+             * 已處於熊市 & 上分形、下分形 > 鱷魚線，做多
+             */
+            if (bear == true && fractalUp > alligatorMin && fractalDown > alligatorMin && buy == false) {
+                console.log("已處於熊市 & 上分形、下分形 > 鱷魚線，做多");
                 //多單要用pairBack買，使用pairBack資產balanceBack
-                let amount = balanceBack * amountPercent / currentPrice; //每次購買amountPercent，因使用pairFront匯率，故除於currentPrice
+                let amount = balanceBack * amountSize / currentPrice; //每次購買amountPercent，因使用pairFront匯率，故除於currentPrice
                 amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
                 order("BUY", amount, currentPrice); //下單
                 buy = true; //已做多
                 watchBuy = true; //開始監視此多單
                 lockPair = true; //鎖定幣種
+                balanceBeforeBuy = balanceCurrent;
             }
         });
     });
