@@ -74,9 +74,9 @@ setInterval(() => {
             let balanceCurrent = Math.floor(balanceBack + balanceFront * currentPrice); //當前總資產(無條件捨去)
 
             /**
-             * 上分形、下分形 < 鱷魚線，處於熊市觀望做多訊號
+             * 下巴 > 齒 > 上唇 & 上分形、下分形 < 下巴，處於熊市
              */
-            if (fractalUp < alligatorMax && fractalDown < alligatorMax) {
+            if (alligatorDown > alligatorMiddel && alligatorMiddel > alligatorUp && fractalUp < alligatorDown && fractalDown < alligatorDown) {
                 if (pairFront == pair_01) {
                     bear_01 = true;
                 } else if (pairFront == pair_02) {
@@ -177,10 +177,10 @@ setInterval(() => {
             }
 
             /**
-             * 上分形、下分形 < 鱷魚線，多頭平倉
+             * 熊市，多頭平倉
              */
-            if (fractalUp < alligatorMax && fractalDown < alligatorMax && buy == true && watchBuy == false) {
-                console.log("上分形、下分形 < 鱷魚線，多頭平倉");
+            if (bear == true && buy == true && watchBuy == false) {
+                console.log("熊市，多頭平倉");
                 //平倉要用pairFront賣，使用pairFront資產balanceFront
                 let amount = balanceFront * amountSize; //每次購買amountPercent
                 amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
@@ -190,10 +190,10 @@ setInterval(() => {
             }
 
             /**
-             * 已處於熊市 & 上分形、下分形 > 鱷魚線，做多
+             * 已處於熊市 & 上唇 > 齒 > 下巴 & 上分形、下分形 > 下巴，做多
              */
-            if (bear == true && fractalUp > alligatorMin && fractalDown > alligatorMin && buy == false) {
-                console.log("已處於熊市 & 上分形、下分形 > 鱷魚線，做多");
+            if (bear == true && alligatorUp > alligatorMiddel && alligatorMiddel > alligatorDown && fractalUp > alligatorDown && fractalDown > alligatorDown && buy == false) {
+                console.log("已處於熊市 & 上唇 > 齒 > 下巴 & 上分形、下分形 > 下巴，做多");
                 //多單要用pairBack買，使用pairBack資產balanceBack
                 let amount = balanceBack * amountSize / currentPrice; //每次購買amountPercent，因使用pairFront匯率，故除於currentPrice
                 amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
