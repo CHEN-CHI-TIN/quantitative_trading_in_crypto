@@ -206,11 +206,11 @@ setInterval(() => {
             }
 
             /**
-             * 混沌，多頭平倉
+             * 上分形、下分形 < 下巴，多頭平倉
              */
-            if (chaos == true && buy == true && watchBuy == false) {
+            if (fractalUp < alligatorDown && fractalDown < alligatorDown && buy == true && watchBuy == false) {
                 console.log("--------------------------------------------------", "|", Date());
-                console.log("混沌，多頭平倉");
+                console.log("上分形、下分形 < 下巴，多頭平倉");
                 //平倉要用pairFront賣，使用pairFront資產balanceFront
                 let amount = balanceFront * amountSize; //每次購買amountPercent
                 amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
