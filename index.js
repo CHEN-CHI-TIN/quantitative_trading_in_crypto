@@ -89,6 +89,7 @@ setInterval(() => {
 
             /**
              * 上分形 > 鱷魚線 & 下分形 < 鱷魚線，處於混沌
+             * 若處於混沌後變為熊市，皆重置
              */
             if (fractalUp > alligatorMax && fractalDown < alligatorMin) {
                 if (pairFront == pair_01) {
@@ -102,6 +103,12 @@ setInterval(() => {
                 } else if (pairFront == pair_05) {
                     chaos_05 = true;
                 }
+            } else if (fractalUp < alligatorDown && fractalDown < alligatorDown) {
+                chaos_01 = false;
+                chaos_02 = false;
+                chaos_03 = false;
+                chaos_04 = false;
+                chaos_05 = false;
             }
             if (pairFront == pair_01 && chaos_01 == true) {
                 chaos = true;
