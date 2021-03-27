@@ -12,7 +12,7 @@ const timeUnit = "MIN"; //資料量之時間單位
 const alligatorRound = 4; //鱷魚線數值之四捨五入至小數點後?位
 const amountSize = 1; //每次交易量(1為全部)
 const amountRound = 8; //下單量之小數點位數
-const goal = 1; //收益超過總資產之?將平倉(%)
+const goal = 100; //收益超過總資產之?將平倉(%)
 
 const pair_01 = "btc";
 const pair_02 = "eth";
@@ -26,6 +26,12 @@ let switchPair_02 = false;
 let switchPair_03 = false;
 let switchPair_04 = false;
 let switchPair_05 = false;
+let bear = false;
+let bear_01 = false;
+let bear_02 = false;
+let bear_03 = false;
+let bear_04 = false;
+let bear_05 = false;
 let chaos = false;
 let chaos_01 = false;
 let chaos_02 = false;
@@ -88,10 +94,40 @@ setInterval(() => {
             let balanceCurrent = Math.floor(balanceBack + balanceFront * currentPrice); //當前總資產(無條件捨去)
 
             /**
-             * 上分形 > 鱷魚線 & 下分形 < 鱷魚線，處於混沌
-             * 若處於混沌後變為熊市，皆重置
+             * 下巴 > 齒 > 上唇 & 上分形 < 鱷魚線，處於熊市
              */
-            if (fractalUp > alligatorMax && fractalDown < alligatorMin) {
+            if (alligatorDown > alligatorMiddel && alligatorMiddel > alligatorUp && fractalUp < alligatorMin) {
+                if (pairFront == pair_01) {
+                    bear_01 = true;
+                } else if (pairFront == pair_02) {
+                    bear_02 = true;
+                } else if (pairFront == pair_03) {
+                    bear_03 = true;
+                } else if (pairFront == pair_04) {
+                    bear_04 = true;
+                } else if (pairFront == pair_05) {
+                    bear_05 = true;
+                }
+            }
+            if (pairFront == pair_01 && bear_01 == true) {
+                bear = true;
+            } else if (pairFront == pair_02 && bear_02 == true) {
+                bear = true;
+            } else if (pairFront == pair_03 && bear_03 == true) {
+                bear = true;
+            } else if (pairFront == pair_04 && bear_04 == true) {
+                bear = true;
+            } else if (pairFront == pair_05 && bear_05 == true) {
+                bear = true;
+            } else {
+                bear = false;
+            }
+
+            /**
+             * 觀察熊市後之變化
+             * 上分形 > 鱷魚線 & 下分形 < 鱷魚線，處於熊市後之混沌期
+             */
+            if (bear == true && fractalUp > alligatorMax && fractalDown < alligatorMin) {
                 if (pairFront == pair_01) {
                     chaos_01 = true;
                 } else if (pairFront == pair_02) {
@@ -103,12 +139,6 @@ setInterval(() => {
                 } else if (pairFront == pair_05) {
                     chaos_05 = true;
                 }
-            } else if (fractalUp < alligatorDown && fractalDown < alligatorDown) {
-                chaos_01 = false;
-                chaos_02 = false;
-                chaos_03 = false;
-                chaos_04 = false;
-                chaos_05 = false;
             }
             if (pairFront == pair_01 && chaos_01 == true) {
                 chaos = true;
@@ -122,6 +152,22 @@ setInterval(() => {
                 chaos = true;
             } else {
                 chaos = false;
+            }
+
+            /**
+             * 若處於混沌期後再次熊市(一切重置)
+             */
+            if (chaos == true && alligatorDown > alligatorMiddel && alligatorMiddel > alligatorUp && fractalUp < alligatorMin) {
+                bear_01 = false;
+                bear_02 = false;
+                bear_03 = false;
+                bear_04 = false;
+                bear_05 = false;
+                chaos_01 = false;
+                chaos_02 = false;
+                chaos_03 = false;
+                chaos_04 = false;
+                chaos_05 = false;
             }
 
             // console.log("--------------------------------------------------", "|", Date());
@@ -189,6 +235,11 @@ setInterval(() => {
                         console.log("確認已做多");
                         watchBuy = false;
                         lockPair = true; //若已確認做多，鎖定幣種直至平倉
+                        bear_01 = false;
+                        bear_02 = false;
+                        bear_03 = false;
+                        bear_04 = false;
+                        bear_05 = false;
                         chaos_01 = false;
                         chaos_02 = false;
                         chaos_03 = false;
@@ -213,11 +264,11 @@ setInterval(() => {
             }
 
             /**
-             * 上分形、下分形 < 下巴，多頭平倉
+             * 當前價格 < 下分形 & 當前價格 < 鱷魚線，多頭平倉
              */
-            if (fractalUp < alligatorDown && fractalDown < alligatorDown && buy == true && watchBuy == false) {
+            if (currentPrice < fractalDown && currentPrice < alligatorMin && buy == true && watchBuy == false) {
                 console.log("--------------------------------------------------", "|", Date());
-                console.log("上分形、下分形 < 下巴，多頭平倉");
+                console.log("當前價格 < 下分形 & 當前價格 < 鱷魚線，多頭平倉");
                 //平倉要用pairFront賣，使用pairFront資產balanceFront
                 let amount = balanceFront * amountSize; //每次購買amountPercent
                 amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
@@ -227,11 +278,11 @@ setInterval(() => {
             }
 
             /**
-             * 已處於混沌 & 上唇 > 齒 > 下巴 & 上分形、下分形 > 下巴，做多
+             * 已處於熊市後之混沌期 & 當前價格 > 上分形 & 當前價格 > 鱷魚線，做多
              */
-            if (chaos == true && alligatorUp > alligatorMiddel && alligatorMiddel > alligatorDown && fractalUp > alligatorDown && fractalDown > alligatorDown && buy == false) {
+            if (chaos == true && currentPrice > fractalUp && currentPrice > alligatorMax && buy == false) {
                 console.log("--------------------------------------------------", "|", Date());
-                console.log("已處於混沌 & 上唇 > 齒 > 下巴 & 上分形、下分形 > 下巴，做多");
+                console.log("已處於熊市後之混沌期 & 當前價格 > 上分形 & 當前價格 > 鱷魚線，做多");
                 //多單要用pairBack買，使用pairBack資產balanceBack
                 let amount = balanceBack * amountSize / currentPrice; //每次購買amountPercent，因使用pairFront匯率，故除於currentPrice
                 amount = o.toolRound(amount, amountRound); //四捨五入至amountRound位
