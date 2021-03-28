@@ -192,16 +192,14 @@ setInterval(() => {
                             identity: email,
                             nonce: Date.now()
                         })).then((resData) => {
-                            console.log("--------------------------------------------------");
-                            console.log(Date());
+                            console.log("--------------------------------------------------", Date());
                             console.log("刪除多頭平倉之漏單");
                             console.log(resData);
                             buy = true; //重新多頭平倉之流程
                             watchOffsetBuy = false;
                         });
                     } else {
-                        console.log("--------------------------------------------------");
-                        console.log(Date());
+                        console.log("--------------------------------------------------", Date());
                         console.log("確認已多頭平倉");
                         watchOffsetBuy = false;
                         lockPair = false; //解除鎖定幣種
@@ -225,8 +223,7 @@ setInterval(() => {
                             identity: email,
                             nonce: Date.now()
                         })).then((resData) => {
-                            console.log("--------------------------------------------------");
-                            console.log(Date());
+                            console.log("--------------------------------------------------", Date());
                             console.log("刪除做多之漏單");
                             console.log(resData);
                             buy = false; //重新做多之流程
@@ -234,8 +231,7 @@ setInterval(() => {
                             lockPair = false; //解除鎖定幣種，使下一循環開始為新幣種
                         });
                     } else {
-                        console.log("--------------------------------------------------");
-                        console.log(Date());
+                        console.log("--------------------------------------------------", Date());
                         console.log("確認已做多");
                         watchBuy = false;
                         lockPair = true; //若已確認做多，鎖定幣種直至平倉
@@ -257,8 +253,7 @@ setInterval(() => {
              * !收益超過goal，多頭平倉
              */
             if (balanceCurrent - balanceBeforeBuy >= balanceBeforeBuy / 100 * goal && buy == true && watchBuy == false) {
-                console.log("--------------------------------------------------");
-                console.log(Date());
+                console.log("--------------------------------------------------", Date());
                 console.log("收益超過goal，多頭平倉");
                 //平倉要用pairFront賣，使用pairFront資產balanceFront
                 let amount = balanceFront * amountSize; //每次購買amountPercent
@@ -272,8 +267,7 @@ setInterval(() => {
              * !當前價格 < 下分形 & 當前價格 < 鱷魚線，多頭平倉
              */
             if (currentPrice < fractalDown && currentPrice < alligatorMin && buy == true && watchBuy == false) {
-                console.log("--------------------------------------------------");
-                console.log(Date());
+                console.log("--------------------------------------------------", Date());
                 console.log("當前價格 < 下分形 & 當前價格 < 鱷魚線，多頭平倉");
                 //平倉要用pairFront賣，使用pairFront資產balanceFront
                 let amount = balanceFront * amountSize; //每次購買amountPercent
@@ -287,8 +281,7 @@ setInterval(() => {
              * !已處於熊市後之混沌期 & 上唇 > 齒 > 下巴 & 下分形 > 下巴 & 下分形 < 上唇，做多
              */
             if (chaos == true && alligatorUp > alligatorMiddel && alligatorMiddel > alligatorDown && fractalDown > alligatorDown && fractalDown < alligatorUp && buy == false) {
-                console.log("--------------------------------------------------");
-                console.log(Date());
+                console.log("--------------------------------------------------", Date());
                 console.log("已處於熊市後之混沌期 & 上唇 > 齒 > 下巴 & 下分形 > 下巴 & 下分形 < 上唇，做多");
                 //多單要用pairBack買，使用pairBack資產balanceBack
                 let amount = balanceBack * amountSize / currentPrice; //每次購買amountPercent，因使用pairFront匯率，故除於currentPrice
@@ -317,8 +310,6 @@ function order(action, amount, price) {
         timestamp: Date.parse(new Date()),
         type: "LIMIT"
     })).then((resData) => {
-        console.log("--------------------------------------------------");
-        console.log(Date());
         console.log(resData);
     });
 }
