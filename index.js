@@ -94,9 +94,9 @@ setInterval(() => {
             let balanceCurrent = Math.floor(balanceBack + balanceFront * currentPrice); //當前總資產(無條件捨去)
 
             /**
-             * 下巴 > 齒 > 上唇 & 上分形 < 鱷魚線，處於熊市
+             * 下巴 > 齒 > 上唇 & 上分形 < 下巴，處於熊市
              */
-            if (alligatorDown > alligatorMiddel && alligatorMiddel > alligatorUp && fractalUp < alligatorMin) {
+            if (alligatorDown > alligatorMiddel && alligatorMiddel > alligatorUp && fractalUp < alligatorDown) {
                 if (pairFront == pair_01) {
                     bear_01 = true;
                 } else if (pairFront == pair_02) {
@@ -157,7 +157,7 @@ setInterval(() => {
             /**
              * 若處於混沌期後再次熊市(一切重置)
              */
-            if (chaos == true && alligatorDown > alligatorMiddel && alligatorMiddel > alligatorUp && fractalUp < alligatorMin) {
+            if (chaos == true && alligatorDown > alligatorMiddel && alligatorMiddel > alligatorUp && fractalUp < alligatorDown) {
                 bear_01 = false;
                 bear_02 = false;
                 bear_03 = false;
