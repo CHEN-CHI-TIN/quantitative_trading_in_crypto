@@ -1,9 +1,9 @@
 const o = require("./wheel");
 const request = require("request");
 
-const email = "timmybrick@icloud.com";
-const apiKey = "2a4f6d473376f0dd36baf629bcd1d21b";
-const apiSecret = "$2a$12$YW1s2uH1Fpn1rThxfYf9LOSQ53DkVb8VqiT4/rlj/o/RI9TZYHCRi";
+const email = "<your email>";
+const apiKey = "<your apiKey>";
+const apiSecret = "<your apiSecret>";
 const pairBack = "twd"; //基礎幣種
 const timeLoop = 1000 * 15; //更新頻率(毫秒)
 const resolution = "30m"; //K線單位
